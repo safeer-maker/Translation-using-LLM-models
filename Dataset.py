@@ -2,23 +2,24 @@ from datasets import load_dataset
 from transformers import AutoTokenizer
 import os
 
-################### Global variables ###################
-'''
-model_checkpoint = "Helsinki-NLP/opus-mt-en-fr"
-tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
-
-model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
-data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
-'''
-
+# Function to load the dataset from Hugging Face
 def load_dataset_from_hf(dataset_name, lang1 = 'en', lang2 = 'fr' ):
+    """
+    load_dataset_from_hf: Function to load the dataset from Hugging Face
+    param dataset_name: The name of the dataset to load
+    param lang1: The language of the first column
+    param lang2: The language of the second column
+    """
     dataset = load_dataset(dataset_name, lang1 = lang1, lang2= lang2)
     dataset = dataset['train'].train_test_split(test_size=0.1, seed=11)
     dataset['validation'] = dataset.pop('test')
     return dataset
 
-
 def tokenized_ds(dataset):
+    """
+    tokenized_ds: Function to tokenize the dataset
+    param dataset: The dataset to tokenize
+    """
     tokenizer_checkpoint = os.getenv("CHECKPOINT")
     tokenizer = AutoTokenizer.from_pretrained(tokenizer_checkpoint)
     eng = [en['en'] for en in dataset['translation']]
@@ -26,16 +27,3 @@ def tokenized_ds(dataset):
     token = tokenizer (eng, text_target=fr,max_length=128, truncation=True)
     return token
 
-
-'''
-ds = load_dataset_from_hf('kde4', lang1 = 'en', lang2 = 'fr' )
-
-# Lets Reduce the Dataset side to 10000
-ds['train'] = ds['train'].shuffle(seed=11).select(range(10000))
-ds['validation'] = ds['validation'].shuffle(seed=11).select(range(1000))
-
-tok_ds = ds.map ( tokenized_ds, batched=True, remove_columns=ds['train'].column_names )
-
-print (tok_ds['train'][:3])
-
-'''
