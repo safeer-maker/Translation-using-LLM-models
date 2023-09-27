@@ -1,18 +1,15 @@
 from datasets import load_dataset
-from transformers import AutoTokenizer, DataCollatorForSeq2Seq, AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer
-import numpy as np
-import evaluate
-
+from transformers import AutoTokenizer
+import os
 
 ################### Global variables ###################
+'''
 model_checkpoint = "Helsinki-NLP/opus-mt-en-fr"
 tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
 
 model = AutoModelForSeq2SeqLM.from_pretrained(model_checkpoint)
 data_collator = DataCollatorForSeq2Seq(tokenizer, model=model)
-
-metric = evaluate.load ("sacrebleu")
-
+'''
 
 def load_dataset_from_hf(dataset_name, lang1 = 'en', lang2 = 'fr' ):
     dataset = load_dataset(dataset_name, lang1 = lang1, lang2= lang2)
@@ -22,13 +19,15 @@ def load_dataset_from_hf(dataset_name, lang1 = 'en', lang2 = 'fr' ):
 
 
 def tokenized_ds(dataset):
-    
+    tokenizer_checkpoint = os.getenv("CHECKPOINT")
+    tokenizer = AutoTokenizer.from_pretrained(tokenizer_checkpoint)
     eng = [en['en'] for en in dataset['translation']]
     fr  = [fr['fr'] for fr in dataset['translation']]
     token = tokenizer (eng, text_target=fr,max_length=128, truncation=True)
     return token
 
 
+'''
 ds = load_dataset_from_hf('kde4', lang1 = 'en', lang2 = 'fr' )
 
 # Lets Reduce the Dataset side to 10000
@@ -39,4 +38,4 @@ tok_ds = ds.map ( tokenized_ds, batched=True, remove_columns=ds['train'].column_
 
 print (tok_ds['train'][:3])
 
-
+'''

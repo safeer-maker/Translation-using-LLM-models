@@ -1,6 +1,6 @@
 import evaluate
 import numpy as np
-from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer
+from transformers import AutoTokenizer,DataCollatorForSeq2Seq, AutoModelForSeq2SeqLM, Seq2SeqTrainingArguments, Seq2SeqTrainer
 import os
 
 ################### Functions ###################
@@ -13,7 +13,7 @@ def compute_metrics(eval_preds):
     param eval_preds: The predictions from the model
     """
     preds, labels = eval_preds
-    model_checkpoint = os.getenv("MODEL_CHECKPOINT")
+    model_checkpoint = os.getenv("CHECKPOINT")
 
     tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
     metric = evaluate.load ("sacrebleu")
@@ -60,21 +60,20 @@ def training_args(model_checkpoint, batch_size):
     return args
 
 # Function to fine tune the model
-def fine_tune_model (model_name, dataset_tokenized, batch_size, data_collator, model_name_to_save):
+def fine_tune_model (model_name, dataset_tokenized, batch_size, model_name_to_save):
     """
     fine_tune_model: Function to fine tune the model.
 
     param model_name: The model name to use for training
     param dataset_tokenized: The tokenized dataset to use for training
     param batch_size: The batch size to use for training
-    param data_collator: The data collator to use for training
     param model_name_to_save: The model name to save the fine tuned model
     """
     model = AutoModelForSeq2SeqLM.from_pretrained(model_name)
     args = training_args(model_name, batch_size)
 
-    os.environ["MODEL_CHECKPOINT"] = model_name
     tokenizer = AutoTokenizer.from_pretrained(model_name)
+    data_collator = DataCollatorForSeq2Seq (tokenizer, model=model)
 
     trainer = Seq2SeqTrainer(
         model,
@@ -93,7 +92,7 @@ def fine_tune_model (model_name, dataset_tokenized, batch_size, data_collator, m
         trainer.save_model(model_name_to_save)
         print(f"Model saved successfully with name {model_name_to_save}")
 
-        return 0
+        return model
     except:
         print("Error in training the model")
         return -1
